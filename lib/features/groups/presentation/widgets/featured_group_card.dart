@@ -1,0 +1,137 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla_5roga/core/demo/demo_data.dart';
+import 'package:yalla_5roga/core/theme/app_colors.dart';
+import 'package:yalla_5roga/core/utils/extensions.dart';
+import 'package:yalla_5roga/core/widgets/app_badge.dart';
+import 'package:yalla_5roga/core/widgets/app_snackbar.dart';
+import 'package:yalla_5roga/core/widgets/avatar_stack.dart';
+import 'package:yalla_5roga/core/widgets/custom_button.dart';
+import 'package:yalla_5roga/features/outings/presentation/pages/event_page.dart';
+import 'package:yalla_5roga/features/outings/presentation/pages/create_outing_page.dart';
+import 'package:yalla_5roga/features/outings/presentation/providers/outings_provider.dart';
+
+class FeaturedGroupCard extends StatelessWidget {
+  const FeaturedGroupCard({super.key, required this.group, this.onTap});
+
+  final DemoGroup group;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final groupOutings = context.watch<OutingsProvider>().forGroup(group.id);
+    final nextOuting = groupOutings.isEmpty ? null : groupOutings.first;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+      borderRadius: BorderRadius.circular(Responsive.radiusLg),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(Responsive.spaceMd),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.brand700, Color(0xFF8B5CF6)],
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppBadge(
+                        label: l10n.activeNow,
+                        color: Colors.white.withValues(alpha: 0.16),
+                        textColor: Colors.white,
+                      ),
+                      Responsive.spaceSm.gapH,
+                      Text(
+                        group.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: Responsive.fontMd,
+                        ),
+                      ),
+                      Text(
+                        l10n.membersOutings(group.people.length, groupOutings.length),
+                        style: TextStyle(color: AppColors.brand100, fontSize: 10.sp),
+                      ),
+                    ],
+                  ),
+                ),
+                8.gapW,
+                AvatarStack(urls: group.avatars.take(2).toList(), extra: 6),
+              ],
+            ),
+          ),
+          Container(
+            color: context.palette.surface,
+            padding: EdgeInsets.all(14.w),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.currentDecision,
+                            style: TextStyle(
+                              color: context.palette.textMuted,
+                              fontSize: Responsive.fontCaption,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            nextOuting?.title ?? group.decision ?? l10n.whereBrunch,
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ],
+                      ),
+                    ),
+                    AppBadge(label: l10n.votedCount(5, 8)),
+                  ],
+                ),
+                12.gapH,
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomButton(
+                        label: l10n.voteNow,
+                        icon: Icons.how_to_vote_outlined,
+                        size: AppButtonSize.small,
+                        onPressed: () => nextOuting == null
+                            ? Get.to(() => CreateOutingPage(group: group))
+                            : Get.to(() => EventPage(event: nextOuting)),
+                      ),
+                    ),
+                    Responsive.spaceSm.gapW,
+                    IconButton.filled(
+                      onPressed: () => AppSnackBar.show(l10n.share),
+                      style: IconButton.styleFrom(
+                        backgroundColor: context.palette.surfaceMuted,
+                        foregroundColor: context.palette.textMuted,
+                      ),
+                      icon: const Icon(Icons.share_outlined),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      ),
+    );
+  }
+}
